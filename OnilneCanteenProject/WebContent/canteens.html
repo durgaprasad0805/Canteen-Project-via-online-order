@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Select Canteen</title>
+
+<style>
+body {
+  font-family: Poppins, sans-serif;
+  margin: 0;
+  text-align: center;
+  color: #fff;
+  height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 🔥 Background Animation */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: url('bg.jpg') no-repeat center center/cover;
+
+  z-index: -1;
+
+  animation: bgZoom 12s ease-in-out infinite alternate;
+}
+
+/* 🔄 Zoom + Move Animation */
+@keyframes bgZoom {
+  0% {
+    transform: scale(1) translateY(0px);
+  }
+  50% {
+    transform: scale(1.08) translateY(-10px);
+  }
+  100% {
+    transform: scale(1.12) translateY(-20px);
+  }
+}
+
+header {
+  background: rgba(49, 119, 194, 0.85);
+  color: white;
+  padding: 15px;
+  border-bottom: 2px solid #fff;
+}
+
+.container {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 50px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  width: 220px;
+  margin: 15px;
+  padding: 15px;
+  cursor: pointer;
+  transition: 0.3s;
+  color: #333;
+  font-weight: 600;
+}
+
+.card:hover {
+  transform: scale(1.05);
+  background: rgba(255, 255, 255, 0.95);
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>Select Your Canteen</h1>
+</header>
+
+<div class="container">
+  <div class="card" onclick="selectCanteen('Main Canteen')">Main Canteen</div>
+  <div class="card" onclick="selectCanteen('North Block Canteen')">North Block Canteen</div>
+  <div class="card" onclick="selectCanteen('South Block Canteen')">South Block Canteen</div>
+  <div class="card" onclick="selectCanteen('Juicer Corner')">Juicer Corner</div>
+</div>
+
+<script>
+function selectCanteen(name) {
+  localStorage.setItem("canteen", name);
+  window.location.href = "menu.html";
+}
+</script>
+
+</body>
+</html>

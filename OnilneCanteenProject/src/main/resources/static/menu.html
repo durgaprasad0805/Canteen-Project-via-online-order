@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Canteen Menu — KL University</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+    --accent:#ef233c;
+    --muted:#2b2d42;
+    --card-bg:#ffffff;
+    --page-bg:#f4f6f9;
+    --inst-border: #e6e6e6;
+    --inst-btn-bg: #ffffff;
+    --inst-btn-color: #111;
+}
+
+* { box-sizing: border-box; }
+html,body { height:100%; }
+body{
+    margin:0;
+    font-family:"Poppins",sans-serif;
+    background:var(--page-bg);
+    color:#222;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+}
+
+/* HEADER */
+header{
+    background:var(--accent);
+    color:#fff;
+    padding:14px 18px;
+    font-size:20px;
+    font-weight:700;
+    text-align:center;
+    position:sticky;
+    top:0;
+    z-index:40;
+    box-shadow:0 6px 18px rgba(0,0,0,0.06);
+}
+
+/* TOP ROW - categories + search */
+.top-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 18px;
+    background:#fff;
+    border-bottom:1px solid #eee;
+    justify-content:space-between;
+    flex-wrap:wrap;
+}
+
+/* categories */
+.categories{
+    display:flex;
+    gap:10px;
+    overflow-x:auto;
+    padding:8px 4px;
+}
+.cat-btn{
+    background:var(--muted);
+    color:#fafbfc;
+    border:none;
+    padding:8px 14px;
+    border-radius:999px;
+    font-weight:600;
+    cursor:pointer;
+    white-space:nowrap;
+    transition: transform .18s ease, background .2s ease, box-shadow .2s ease;
+    box-shadow: none;
+}
+.cat-btn:hover{ transform:translateY(-3px); background:#39406a; }
+.cat-btn.active{
+    background:var(--accent);
+    box-shadow:0 10px 30px rgba(239,35,60,0.12);
+}
+
+/* search */
+.search-wrap{ display:flex; gap:8px; align-items:center; margin-left:auto; }
+.search{
+    padding:9px 12px;
+    border-radius:10px;
+    border:1px solid #e0e0e0;
+    min-width:220px;
+    font-size:14px;
+}
+
+/* MENU GRID */
+.menu-container{
+    max-width:1200px;
+    margin:20px auto;
+    padding:18px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    gap:18px;
+}
+
+/* ITEM CARD */
+.item-card{
+    background:var(--card-bg);
+    border-radius:12px;
+    box-shadow:0 6px 18px rgba(20,20,30,0.06);
+    overflow:hidden;
+    transform:translateY(18px) scale(.995);
+    opacity:0;
+    transition: transform .5s cubic-bezier(.2,.9,.3,1), opacity .5s ease, box-shadow .25s ease;
+    display:flex;
+    flex-direction:column;
+    will-change: transform, opacity;
+    position:relative;
+}
+.item-card.visible{
+    transform:none;
+    opacity:1;
+}
+.item-card:hover{
+    transform: translateY(-8px) scale(1.01);
+    box-shadow:0 18px 40px rgba(20,20,30,0.12);
+}
+
+/* image */
+.img-wrap{
+    width:100%;
+    height:140px;
+    overflow:hidden;
+    background:#eee;
+}
+.img-wrap img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    transition: transform 1.3s cubic-bezier(.2,.9,.3,1);
+}
+.item-card:hover .img-wrap img{
+    transform: scale(1.14) translateY(-6px);
+}
+
+/* item body */
+.item-body{
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1 1 auto;
+}
+.title{ font-weight:600; font-size:15px; color:#111; }
+.desc{ font-size:13px; color:#666; min-height:0; }
+
+/* bottom row: price left, qty right */
+.bottom{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:auto;
+    gap:8px;
+}
+.price{ font-weight:700; color:var(--muted); font-size:15px; }
+
+/* INSTAMART STYLE QTY (white circle + border) */
+.qty-controls{
+    display:flex;
+    align-items:center;
+    gap:8px;
+}
+
+/* the control wrapper (to position at bottom-right visually) */
+.qty-controls .inst-wrapper{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    background:transparent;
+}
+
+/* instamart button */
+.inst-btn{
+    width:36px;
+    height:36px;
+    background:var(--inst-btn-bg);
+    color:var(--inst-btn-color);
+    border-radius:50%;
+    border:1px solid var(--inst-border);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:700;
+    font-size:18px;
+    cursor:pointer;
+    box-shadow: 0 2px 6px rgba(16,16,20,0.04);
+    transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease, background .12s ease;
+    user-select:none;
+}
+.inst-btn:hover{
+    transform: translateY(-2px);
+    border-color:#cfcfcf;
+}
+.inst-btn:active{
+    transform: translateY(1px) scale(.98);
+}
+
+/* visually separate qty display */
+.qty-display{
+    min-width:30px;
+    text-align:center;
+    font-weight:700;
+    color:#222;
+    font-size:15px;
+}
+
+/* subtle click ripple (CSS only) */
+.inst-btn::after{
+    content:"";
+    position:absolute;
+    width:0;
+    height:0;
+    border-radius:50%;
+    background: rgba(0,0,0,0.06);
+    transition: width .25s ease, height .25s ease, opacity .25s;
+    opacity:0;
+}
+.inst-btn:active::after{
+    width:56px;
+    height:56px;
+    opacity:1;
+}
+
+/* CART BAR */
+.cart-bar{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:60;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    flex-direction:column;
+}
+.total-box{
+    background:var(--muted);
+    color:#fff;
+    padding:12px 18px;
+    border-radius:12px;
+    font-weight:700;
+    min-width:120px;
+    text-align:center;
+    box-shadow:0 8px 24px rgba(43,45,66,0.16);
+}
+.cart-btn{
+    background:var(--accent);
+    border:none;
+    color:#fff;
+    padding:12px 16px;
+    border-radius:12px;
+    cursor:pointer;
+    font-weight:700;
+    box-shadow:0 10px 30px rgba(239,35,60,0.18);
+    transition: transform .12s ease;
+}
+.cart-btn:hover{ transform:translateY(-4px); }
+
+/* responsive tweaks */
+@media (max-width:900px){
+    .img-wrap{ height:120px; }
+    .inst-btn{ width:34px; height:34px; font-size:16px; }
+}
+@media (max-width:520px){
+    .menu-container{ gap:12px; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); }
+    .search{ min-width:140px; }
+}
+
+/* simple category scrollbar style */
+.categories::-webkit-scrollbar{ height:8px; }
+.categories::-webkit-scrollbar-thumb{ background:#ddd; border-radius:8px; }
+</style>
+</head>
+<body>
+
+<header>KL University — Canteen Menu</header>
+
+<div class="top-row">
+    <div class="categories" id="categoryList"></div>
+    <div class="search-wrap">
+        <input class="search" id="searchInput" placeholder="Search items (e.g. dosa, biryani)" />
+    </div>
+</div>
+
+<main class="menu-container" id="menuList"></main>
+
+<div class="cart-bar">
+    <div class="total-box">Total: ₹<span id="totalAmount">0</span></div>
+    <button class="cart-btn" onclick="goToCart()">View Cart</button>
+</div>
+
+<script>
+  // call this to load menu from Flask
+async function loadMenuFromAPI() {
+  const res = await fetch('/api/menu');
+  const data = await res.json(); // data grouped by category
+  // convert to same shape your UI expects (menuData)
+  window.menuData = data; // optionally reassign global menuData
+  // if your renderItems uses menuData, call renderItems()
+  // if your renderItems expects same nested structure, it should work.
+  renderItems();
+}
+window.addEventListener('DOMContentLoaded', () => {
+  loadMenuFromAPI();
+});
+
+/* Keys */
+const STORAGE_KEY_Q = "kl_canteen_quantities_v1";
+const STORAGE_KEY_T = "kl_canteen_total_v1";
+
+/* load or init quantities */
+let quantities = JSON.parse(localStorage.getItem(STORAGE_KEY_Q) || "{}");
+
+/* menu data (same items + images preserved) */
+const menuData = {
+  breakfast: [
+    { name:"Idly", price:40, img:"https://www.foodie-trail.com/wp-content/uploads/2020/06/251fdbc0-57f6-41c3-a976-5192391cf040.jpg" },
+    { name:"Dosa", price:30, img:"https://i.pinimg.com/originals/e8/dc/7f/e8dc7f0b59b8602ba30621dee3c6291c.jpg" },
+    { name:"Puri", price:35, img:"https://img.onmanorama.com/content/dam/mm/en/food/features/images/2022/3/13/poori.jpg" },
+    { name:"Vada", price:50, img:"https://i.pinimg.com/originals/77/e4/1a/77e41a3f015bc15fe3bc5da5b920aa17.jpg" },
+    { name:"Pongal", price:25, img:"https://tse3.mm.bing.net/th/id/OIP.SW8Molocq0lmqgz_4tsvTwHaEK?pid=Api&P=0&h=220" },
+    { name:"Chapati", price:45, img:"https://img.onmanorama.com/content/dam/mm/en/food/features/images/2024/4/30/chapati.jpg" },
+    { name:"Masala Dosa", price:50, img:"https://i.pinimg.com/736x/2a/c1/51/2ac15169850a766390adcba3a6d28eef.jpg" },
+    { name:"Upma", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.boBBw90ShLIHl5l9pQvbQgHaE7?pid=Api&P=0&h=220" },
+    { name:"Raagi Dosa", price:30, img:"https://img.freepik.com/premium-photo/ragi-dosa-healthy-south-indian-breakfast-item-arranged-round-wooden-base-lined-with-banana-leaf-coconut-chutney-placed-beside-it_527904-1536.jpg" },
+    { name:"Uggani", price:20, img:"https://i.ytimg.com/vi/_EPhnpuLEHI/hqdefault.jpg" },
+    { name:"Sambar Idly", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.FuE2-gjfS6o9HTXYh98fhAHaE8?pid=Api&P=0&h=220" }
+  ],
+
+  veg: [
+    { name:"Veg Meals", price:70, img:"https://tse3.mm.bing.net/th/id/OIP.jCnTA6SitnBnubN7OKiTDgHaHa?pid=Api&P=0&h=220" },
+    { name:"Curd Rice", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.cJzQ-h7MG0O2-osrDcUuLgHaEn?pid=Api&P=0&h=220" },
+    { name:"Jeera Rice", price:120, img:"https://www.indianhealthyrecipes.com/wp-content/uploads/2015/12/jeera-rice-recipe.jpg" },
+    { name:"Veg Fried Rice", price:100, img:"https://tse2.mm.bing.net/th/id/OIP.wJTgF8qg4XiMGGkG5CDRfwHaHa?pid=Api&P=0&h=220" },
+    { name:"Sambar Rice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.YZGH8CAvyJtUg6u6dhO84gHaHT?pid=Api&P=0&h=220" },
+    { name:"Paneer Rice", price:95, img:"https://homecookingshow.in/wp-content/uploads/2025/03/Paneer-Pulao-819x1024.webp" },
+    { name:"Tomato Rice", price:50, img:"https://homecookingshow.in/wp-content/uploads/2025/03/Paneer-Pulao-819x1024.webp" },
+    { name:"Aloo Paratha", price:45, img:"https://1.bp.blogspot.com/-y7eqFVueeuY/UERXjPPaLwI/AAAAAAAATvs/_4-fSks-FBo/s1600/pp+twelve.jpg" },
+    { name:"Paneer Butter Masala", price:120, img:"https://spicecravings.com/wp-content/uploads/2021/09/Paneer-Butter-Masala-Old-Featured.jpg" }
+  ],
+
+  nonveg: [
+    { name:"Biryani", price:80, img:"https://www.thespruceeats.com/thmb/SalyKjzBU-K1Bv-FTFWnbd6ckjY=/2121x1414/filters:fill(auto,1)/GettyImages-639704020-5c4a63ecc9e77c00017bfebf.jpg" },
+    { name:"Chicken Biryani", price:120, img:"https://tse4.mm.bing.net/th/id/OIP.r6T2zRnyrrP8LdtOEaGVowHaGl?pid=Api&P=0&h=220" },
+    { name:"Egg Biryani", price:90, img:"https://spicecravings.com/wp-content/uploads/2020/10/Egg-Biryani-Featured-1.jpg" },
+    { name:"NonVeg Meals", price:70, img:"https://tse1.mm.bing.net/th/id/OIP.kZMsRPanZxzEnkVLF8jVTQHaEK?pid=Api&P=0&h=220"},
+    { name:"Chicken Rice", price:90, img:"https://tse3.mm.bing.net/th/id/OIP.6wNMJIVTWqyvmBTXtZJ0JAHaJQ?pid=Api&P=0&h=220" },
+    { name:"Chicken 65", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.IbkOrGWnnfnfVeswBWVBCgHaE5?pid=Api&P=0&h=220" },
+    { name:"Chicken Roll", price:95, img:"https://tse3.mm.bing.net/th/id/OIP.yDqW9-lugO2NnVzcbtbtrAHaE8?pid=Api&P=0&h=220" },
+    { name:"Egg Roll", price:50, img:"https://cdn3.tmbi.com/secure/RMS/attachments/37/1200x1200/exps32299_CW153679A08_18_4b-AP.jpg" },
+    { name:"Egg Rice", price:70, img:"https://i.ytimg.com/vi/iv1frVobFeQ/maxresdefault.jpg" },
+    { name:"Chicken Fried Rice", price:100, img:"https://www.thespruceeats.com/thmb/0hl8dMFFZDIZTPbQMFrsxlRpaE0=/2880x1920/filters:fill(auto,1)/easy-chicken-fried-rice-recipe-2098604-hero-01-4cc4085b544e45d4a293c4f05e0c985d.jpg" },
+    { name:"Tandoori Momos", price:40, img:"https://static.wixstatic.com/media/542bbb_495834b772074bbbb366610f789c1799~mv2.webp/v1/fill/w_1024,h_1024,al_c/542bbb_495834b772074bbbb366610f789c1799~mv2.webp" },
+    { name:"Chicken Pakodi", price:40, img:"https://yummyindiankitchen.com/wp-content/uploads/2021/04/chicken-pakora-720x960.jpg" },
+    { name:"Egg Puff", price:40, img:"http://spicyindiankitchen.com/wp-content/uploads/2019/03/egg_puffs_1.jpg" }
+  ],
+
+  snacks: [
+    { name:"Samosa", price:15, img:"https://tse3.mm.bing.net/th/id/OIP.Xp2RQVjyCr3kN1G8VhcK_wHaE_?pid=Api&P=0&h=220" },
+    { name:"Burger", price:70, img:"https://www.tasteofhome.com/wp-content/uploads/2020/03/Smash-Burgers_EXPS_TOHcom20_246232_B10_06_10b.jpg" },
+    { name:"French Fries", price:40, img:"https://tse2.mm.bing.net/th/id/OIP.f1R8kpo61Jk2qWFj3ruS3wHaEK?pid=Api&P=0&h=220" },
+    { name:"Apple Chips", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.PYURMf6R89uGbsk2qpr71QHaE8?pid=Api&P=0&h=220" },
+    { name:"Popcorn", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.h1tifceAwzQ__5lUbSUlfgHaEK?pid=Api&P=0&h=220" },
+    { name:"Pie", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.qNmF2LmUBc3U6JBODPsBPgHaFj?pid=Api&P=0&h=220" },
+    { name:"Waffle", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.uIjp1Cy9OvKf3qE0oBxflwHaHa?pid=Api&P=0&h=220" },
+    { name:"Pancakes", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.rhPtn7CWKyZ-H6dEG4c7bQHaLH?pid=Api&P=0&h=220" },
+    { name:"Donut", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.WU-2ga-oKTvNVSdaxYRAiwHaEK?pid=Api&P=0&h=220" },
+    { name:"Cupcakes", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.s-Yl5appwE1y1lj_AfwXCAHaHa?pid=Api&P=0&h=220" },
+    { name:"Cookies", price:50, img:"https://sallysbakingaddiction.com/wp-content/uploads/2017/05/soft-oatmeal-chocolate-chip-cookies-3.jpg" },
+    { name:"Pudding", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.5pqfoMQP-b2jJGgSTQ2H_AHaHa?pid=Api&P=0&h=220" },
+    { name:"Hot Dog", price:50, img:"https://tse3.mm.bing.net/th/id/OIP.HJW8lZYzmWbHeQhryR-pvAHaEK?pid=Api&P=0&h=220" },
+    { name:"Burrito", price:50, img:"https://c.ndtvimg.com/2023-07/j3l7ctlg_burrito_625x300_27_July_23.jpg" },
+    { name:"Tacos", price:50, img:"https://www.samtell.com/hs-fs/hubfs/Blogs/Four-Scrumptous-Tacos-Lined-up-with-ingredients-around-them-1.jpg?width=1800&name=Four-Scrumptous-Tacos-Lined-up-with-ingredients-around-them-1.jpg" },
+    { name:"Sandwich", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.y30GiRwfCGzCTIrhH1KVlgHaE6?pid=Api&P=0&h=220" },
+    { name:"Croissant", price:50, img:"https://www.tavolartegusto.it/wp/wp-content/uploads/2022/09/croissant-francesi.jpg" },
+    { name:"Corn Pizza", price:50, img:"https://i.ytimg.com/vi/gUlsgxzY9GU/maxresdefault.jpg" },
+    { name:"Chicken Pizza", price:50, img:"https://i.ytimg.com/vi/_bFuWNn8XWw/maxresdefault.jpg" },
+    { name:"Cheese Pizza", price:50, img:"https://houston.culturemap.com/media-library/drive-thru-gourmet-pizza-hut-double-cheesy-crust-pan-pizza.jpg?id=31525770&width=2000&height=1500&quality=85&coordinates=0%2C5%2C0%2C6" },
+    { name:"Chocolate Cake", price:50, img:"https://sugargeekshow.com/wp-content/uploads/2023/03/ganache_featured.jpg" },
+    { name:"Baguette", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.JcTfAHXbrWeMBgSOHuMRPAHaFC?pid=Api&P=0&h=220" },
+    { name:"Muffin", price:50, img:"https://thebusybaker.ca/wp-content/uploads/2019/12/pumpkin-chocolate-chip-muffins-fb-ig-2.jpg" },
+    { name:"Cheese Burger", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.giKEirPjdrP3UWY4-MfDVQHaE8?pid=Api&P=0&h=220" }
+  ],
+
+  drinks: [
+    { name:"Coca Cola", price:20, img:"https://www.thedailymeal.com/img/gallery/the-inspiration-behind-the-shape-of-coca-colas-iconic-original-bottle/intro-1672949640.jpg" },
+    { name:"Sprite", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.QjQkMKxtQ_DE2DN4GQjsGgHaLH?pid=Api&P=0&h=220" },
+    { name:"Water Bottle", price:10, img:"https://media.istockphoto.com/photos/group-of-plastic-drink-water-bottles-picture-id623194392?k=6&m=623194392&s=612x612&w=0&h=9uIdkREnslu1PCX09cQxz52a6HEQkmb_mMTs64xMC_E=" },
+    { name:"Apple Juice", price:50, img:"https://images.onlymyhealth.com/imported/images/2022/November/19_Nov_2022/main-applejuicebenefits.jpg" },
+    { name:"Lime Juice", price:50, img:"https://www.acouplecooks.com/wp-content/uploads/2020/08/Limeade-Recipe-007.jpg" },
+    { name:"Mango Juice", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.gzKmW8CEkNjA7tS-6oHhJwHaGg?pid=Api&P=0&h=220" },
+    { name:"Pomegranate Juice", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.DELWoy8qvzTojkAqFij-ewHaIB?pid=Api&P=0&h=220" },
+    { name:"Grape Juice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.aYmXHPNeAYPiiDNBryy8jAHaE8?pid=Api&P=0&h=220" },
+    { name:"Pineapple Juice", price:50, img:"https://www.catchyfinds.com/content/images/2023/01/V_Pineapple-Juice-16.jpg" },
+    { name:"Orange Juice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.5513JkBeYKpuy2WjNXsw9wHaHa?pid=Api&P=0&h=220" },
+    { name:"7 Up", price:35, img:"https://tse4.mm.bing.net/th/id/OIP.VSbVXxnCnCpyWfM6-rkisAHaHa?pid=Api&P=0&h=220" },
+    { name:"Mirinda", price:35, img:"https://c8.alamy.com/comp/2RDCGXH/cairo-egypt-july-11-2023-mirinda-a-brand-of-soft-drink-originally-created-in-spain-in-1959-and-distributed-globally-by-pepsico-since-1970-its-na-2RDCGXH.jpg" },
+    { name:"Fanta", price:35, img:"https://wongfood.vteximg.com.br/arquivos/ids/349478-1000-1000/Gaseosa-Fanta-Original-Lata-355-ml-1-120335414.jpg?v=637183476666870000" },
+    { name:"Pepsi", price:35, img:"https://tse4.mm.bing.net/th/id/OIP.iGY8OHfTU3HQO31AFGAptQHaLH?pid=Api&P=0&h=220" }
+  ],
+
+  coffeeTea: [
+    { name:"Tea", price:10, img:"https://tse3.mm.bing.net/th/id/OIP.LHguZotLpmbXmijITl31xwHaE8?pid=Api&P=0&h=220" },
+    { name:"Black Coffee", price:15, img:"https://tse3.mm.bing.net/th/id/OIP.VtBkYos_BrOFk4z5VjLPhgHaEK?pid=Api&P=0&h=220" },
+    { name:"Lemon Tea", price:15, img:"https://tse4.mm.bing.net/th/id/OIP.MUDMqe25q6QLA51XjKg3zQHaHa?pid=Api&P=0&h=220" },
+    { name:"Ginger Tea", price:15, img:"https://www.migrelief.com/wp-content/uploads/2013/08/Ginger-Tea-Recipes-scaled.jpeg" },
+    { name:"Badam Milk", price:25, img:"https://i.ytimg.com/vi/LrmNSksAYbE/maxresdefault.jpg" },
+    { name:"Filter Coffee", price:20, img:"https://tse4.mm.bing.net/th/id/OIP.Q_jgDPBgMNro4iFfne0JoQHaEK?pid=Api&P=0&h=220" },
+    { name:"Green Tea", price:30, img:"https://tse4.mm.bing.net/th/id/OIP.vmSdvtBt769nxL2uRzBGfAHaFa?pid=Api&P=0&h=220" }
+  ],
+
+  icecreams: [
+    { name:"Vanilla Cup", price:20, img:"https://tse4.mm.bing.net/th/id/OIP.Pju7nA0tKjloKtQzIbUyOAHaEK?pid=Api&P=0&h=220" },
+    { name:" hot Chocolate Cup", price:25, img:"https://tse4.mm.bing.net/th/id/OIP.qaKK6CGuQLoV0yDZ8rpLvwHaHa?pid=Api&P=0&h=220" },
+    { name:"Butterscotch Cone", price:25, img:"https://cpimg.tistatic.com/05822311/b/4/Butterscotch-Cone-Ice-Cream.jpg" },
+    { name:"Kulfi", price:25, img:"https://tse1.mm.bing.net/th/id/OIP.kozaWFYepjtHh9d8deIiGQHaHa?pid=Api&P=0&h=220" },
+    { name:"Strawberry Cone", price:25, img:"https://tse4.mm.bing.net/th/id/OIP.KoU3JXgOO_FInqtKUC8YTQHaHa?pid=Api&P=0&h=220" },
+    { name:"Choco Bar", price:25, img:"https://i.ytimg.com/vi/fP4y-Ri4A4k/maxresdefault.jpg" }
+  ],
+
+  chocolates: [
+    { name:"Dairy Milk", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.3ga6wd4XVu70uW8bBc7zzwHaFP?pid=Api&P=0&h=220" },
+    { name:"KitKat", price:10, img:"https://tse2.mm.bing.net/th/id/OIP.DkfnkQvzUJi_af2lvLqldQHaE8?pid=Api&P=0&h=220" },
+    { name:"Perk", price:20, img:"https://grocery.trishastore.com/products/1621870105.jpg" },
+    { name:"5 Star", price:20, img:"https://tse1.mm.bing.net/th/id/OIP.hvWbfiIGoWQYPeP4pQa8RwHaHa?pid=Api&P=0&h=220" },
+    { name:"Snickers", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.r-90XzKVj5s8Cc9qPeIfHwHaE8?pid=Api&P=0&h=220" },
+    { name:"Bar One", price:20, img:"https://www.bigbasket.com/media/uploads/p/xxl/100011396_8-nestle-chocolate-bar-bar-one-nougat-caramel-filled.jpg" }
+  ]
+};
+
+/* build categories */
+const categoryListEl = document.getElementById("categoryList");
+const categories = Object.keys(menuData);
+let activeCategory = categories[0];
+
+function toDisplay(k){
+  if(k==="coffeeTea") return "Coffee / Tea";
+  if(k==="icecreams") return "Ice-creams";
+  return k.charAt(0).toUpperCase()+k.slice(1);
+}
+
+function buildCategoryButtons(){
+  categoryListEl.innerHTML = "";
+  categories.forEach(cat=>{
+    const btn = document.createElement("button");
+    btn.className = "cat-btn" + (cat===activeCategory ? " active":"");
+    btn.innerText = toDisplay(cat);
+    btn.onclick = ()=> setActiveCategory(cat);
+    categoryListEl.appendChild(btn);
+  });
+}
+
+/* safe id for DOM */
+function safeId(name){ return name.replace(/[^a-z0-9]/gi,"_"); }
+
+const menuListEl = document.getElementById("menuList");
+const searchInput = document.getElementById("searchInput");
+
+/* IntersectionObserver for reveal */
+const observer = new IntersectionObserver((entries)=>{
+  entries.forEach(e=>{
+    if(e.isIntersecting) e.target.classList.add("visible");
+  });
+},{ threshold: 0.12 });
+
+function setActiveCategory(cat){
+  activeCategory = cat;
+  buildCategoryButtons();
+  renderItems();
+}
+
+/* render items */
+function renderItems(){
+  const list = menuData[activeCategory] || [];
+  const q = (searchInput.value || "").trim().toLowerCase();
+  menuListEl.innerHTML = "";
+
+  list.forEach((item, idx)=>{
+    if(q && !item.name.toLowerCase().includes(q)) return;
+    if(!(item.name in quantities)) quantities[item.name] = 0;
+
+    const card = document.createElement("article");
+    card.className = "item-card";
+
+    const imgWrap = document.createElement("div");
+    imgWrap.className = "img-wrap";
+    const img = document.createElement("img");
+    img.src = item.img;
+    img.alt = item.name;
+    imgWrap.appendChild(img);
+
+    const body = document.createElement("div");
+    body.className = "item-body";
+
+    const title = document.createElement("div");
+    title.className = "title";
+    title.innerText = item.name;
+
+    const desc = document.createElement("div");
+    desc.className = "desc";
+    desc.innerText = ""; // optional
+
+    const bottom = document.createElement("div");
+    bottom.className = "bottom";
+
+    const price = document.createElement("div");
+    price.className = "price";
+    price.innerText = "₹" + item.price;
+
+    /* qty controls (Instamart) */
+    const qtyControls = document.createElement("div");
+    qtyControls.className = "qty-controls";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "inst-wrapper";
+
+    const btnMinus = document.createElement("button");
+    btnMinus.className = "inst-btn";
+    btnMinus.innerText = "−";
+    btnMinus.title = "Decrease";
+    btnMinus.onclick = ()=> decreaseQty(item.name, item.price);
+
+    const spanQty = document.createElement("div");
+    spanQty.className = "qty-display";
+    spanQty.id = safeId(item.name) + "_qty";
+    spanQty.innerText = quantities[item.name] || 0;
+
+    const btnPlus = document.createElement("button");
+    btnPlus.className = "inst-btn";
+    btnPlus.innerText = "+";
+    btnPlus.title = "Increase";
+    btnPlus.onclick = ()=> increaseQty(item.name, item.price);
+
+    wrapper.appendChild(btnMinus);
+    wrapper.appendChild(spanQty);
+    wrapper.appendChild(btnPlus);
+    qtyControls.appendChild(wrapper);
+
+    bottom.appendChild(price);
+    bottom.appendChild(qtyControls);
+
+    body.appendChild(title);
+    body.appendChild(desc);
+    body.appendChild(bottom);
+
+    card.appendChild(imgWrap);
+    card.appendChild(body);
+
+    menuListEl.appendChild(card);
+
+    /* reveal: stagger small delay for nicer flow */
+    setTimeout(()=> {
+      observer.observe(card);
+    }, idx * 30);
+  });
+
+  updateTotalDisplay();
+}
+
+/* qty handlers */
+function increaseQty(itemName, price){
+  if(!(itemName in quantities)) quantities[itemName] = 0;
+  quantities[itemName]++;
+  const el = document.getElementById(safeId(itemName) + "_qty");
+  if(el) el.innerText = quantities[itemName];
+  persistQuantities();
+  updateTotalDisplay();
+}
+
+function decreaseQty(itemName, price){
+  if(!(itemName in quantities)) quantities[itemName] = 0;
+  if(quantities[itemName] > 0) quantities[itemName]--;
+  const el = document.getElementById(safeId(itemName) + "_qty");
+  if(el) el.innerText = quantities[itemName];
+  persistQuantities();
+  updateTotalDisplay();
+}
+
+/* totals */
+function updateTotalDisplay(){
+  let total = 0;
+  for(const cat of categories){
+    for(const it of menuData[cat]){
+      const q = quantities[it.name] || 0;
+      total += q * (it.price || 0);
+    }
+  }
+  document.getElementById("totalAmount").innerText = total;
+  localStorage.setItem(STORAGE_KEY_T, String(total));
+}
+
+/* persist */
+function persistQuantities(){
+  localStorage.setItem(STORAGE_KEY_Q, JSON.stringify(quantities));
+}
+
+/* go to cart */
+function goToCart(){
+  persistQuantities();
+  window.location.href = "cart.html";
+}
+
+/* search */
+searchInput.addEventListener("input", ()=> renderItems());
+
+/* build UI & start */
+buildCategoryButtons();
+setActiveCategory(activeCategory);
+
+/* ensure stored keys exist */
+(function ensureQuantitiesFromStorage(){
+  const stored = JSON.parse(localStorage.getItem(STORAGE_KEY_Q) || "{}");
+  quantities = Object.assign({}, stored);
+  for(const cat of categories){
+    for(const it of menuData[cat]){
+      if(!(it.name in quantities)) quantities[it.name] = 0;
+    }
+  }
+  persistQuantities();
+  renderItems();
+})();
+</script>
+
+</body>
+</html>

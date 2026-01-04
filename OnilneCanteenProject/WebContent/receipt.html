@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Payment Receipt — KL University</title>
+<style>
+body { font-family: Arial, sans-serif; background:#f3f3f3; margin:0; display:flex; justify-content:center; }
+.receipt-container { width:380px; background:#fff; margin:40px; padding:20px; border-radius:10px; box-shadow:0 0 10px rgba(0,0,0,0.15); }
+h2 { background:#d9534f; color:#fff; padding:12px; text-align:center; border-radius:6px; margin:0 0 12px 0; }
+table { width:100%; border-collapse:collapse; margin-top:12px; }
+th,td { border:1px solid #e6e6e6; padding:8px; text-align:center; }
+th { background:#fafafa; }
+.total { margin-top:12px; font-weight:700; text-align:right; color:green; }
+.back { display:block; margin-top:14px; text-align:center; color:#d9534f; text-decoration:none; font-weight:700; }
+.empty { text-align:center; color:#666; padding:12px 0; }
+</style>
+</head>
+<body>
+  <div class="receipt-container">
+    <h2>Payment Receipt</h2>
+
+    <p><strong>Name:</strong> <span id="username">Unknown</span></p>
+    <p><strong>Roll Number:</strong> <span id="rollno">Unknown</span></p>
+    <p><strong>Canteen:</strong> <span id="canteenName">Not Selected</span></p>
+
+    <h3>Thank you for your order!</h3>
+
+    <table id="items-table">
+      <thead>
+        <tr><th>Item</th><th>Qty</th><th>Price (₹)</th></tr>
+      </thead>
+      <tbody id="items-body"></tbody>
+    </table>
+
+    <div class="total" id="total">Total: ₹0</div>
+
+    <a class="back" href="index.html">← Back to Home</a>
+  </div>
+
+<script>
+/*
+  Strategy:
+  1) Try to read saved items list: "kl_canteen_items_v1"
+  2) If missing or empty, fall back to quantities: "kl_canteen_quantities_v1"
+     and use a built-in price lookup to reconstruct item prices and list.
+  3) Show total from "kl_canteen_total_v1" if present, otherwise compute from fallback.
+*/
+
+/* Storage keys */
+const KEY_USER  = "kl_canteen_user_v1";
+const KEY_ITEMS = "kl_canteen_items_v1";
+const KEY_QTY   = "kl_canteen_quantities_v1";
+const KEY_TOTAL = "kl_canteen_total_v1";
+
+/* A price map copied from your menu (fallback) */
+/* Keep this in sync with your menu prices if you change menu.html later */
+const priceMap = {
+  "Idly":40,"Dosa":30,"Puri":35,"Vada":50,"Pongal":25,"Chapati":45,"Masala Dosa":50,"Upma":50,"Raagi Dosa":30,"Uggani":20,"Sambar Idly":40,
+  "Veg Meals":70,"Curd Rice":40,"Jeera Rice":120,"Veg Fried Rice":100,"Sambar Rice":50,"Paneer Rice":95,"Tomato Rice":50,"Aloo Paratha":45,"Paneer Butter Masala":120,
+  "Biryani":80,"Chicken Biryani":120,"Egg Biryani":90,"NonVeg Meals":70,"Chicken Rice":90,"Chicken":40,"Chicken Roll":95,"Egg Roll":50,"Egg Rice":70,"Chicken Fried Rice":100,"Tandoori Momos":40,"Chicken Pakodi":40,"Egg Puff":40,
+  "Samosa":15,"Burger":70,"French Fries":40,"Apple Chips":50,"Popcorn":50,"Pie":50,"Waffle":50,"Pancakes":50,"Donut":50,"Cupcakes":50,"Cookies":50,"Pudding":50,"Hot Dog":50,"Burrito":50,"Tacos":50,"Sandwich":50,"Croissant":50,"Corn Pizza":50,"Chicken Pizza":50,"Cheese Pizza":50,"Chocolate Cake":50,"Baguette":50,"Muffin":50,"Cheese Burger":50,
+  "Coca Cola":20,"Sprite":20,"Water Bottle":10,"Apple Juice":50,"Lime Juice":50,"Mango Juice":50,"Pomegranate Juice":50,"Grape Juice":50,"Pineapple Juice":50,"Orange Juice":50,"7 Up":35,"Mirinda":35,"Fanta":35,"Pepsi":35,
+  "Tea":10,"Black Coffee":15,"Lemon Tea":15,"Ginger Tea":15,"Badam Milk":25,"Filter Coffee":20,"Green Tea":30,
+  "Vanilla Cup":20,"Chocolate Cup":25,"Butterscotch Cone":25,"Kulfi":25,"Strawberry Cone":25,"Choco Bar":25,
+  "Dairy Milk":20,"KitKat":10,"Perk":20,"5 Star":20,"Snickers":20,"Bar One":20
+};
+
+/* read user */
+const user = JSON.parse(localStorage.getItem(KEY_USER) || "{}");
+document.getElementById("username").innerText = user.name || "Unknown";
+document.getElementById("rollno").innerText = user.roll || "Unknown";
+
+/* read canteen (optional) */
+const canteen = localStorage.getItem("canteen") || "Not Selected";
+document.getElementById("canteenName").innerText = canteen;
+
+/* read items array if saved by menu page */
+let items = JSON.parse(localStorage.getItem(KEY_ITEMS) || "[]");
+
+/* if items is empty, reconstruct from quantities fallback */
+if (!items || items.length === 0) {
+  const qtyObj = JSON.parse(localStorage.getItem(KEY_QTY) || "{}");
+  items = [];
+  for (const [name, qty] of Object.entries(qtyObj)) {
+    const qnum = Number(qty) || 0;
+    if (qnum > 0) {
+      const price = (priceMap.hasOwnProperty(name) ? priceMap[name] : 0);
+      items.push({ name, qty: qnum, price });
+    }
+  }
+}
+
+/* render items */
+const tbody = document.getElementById("items-body");
+tbody.innerHTML = "";
+
+if (!items || items.length === 0) {
+  tbody.innerHTML = '<tr><td colspan="3" class="empty">No items found in this order.</td></tr>';
+} else {
+  items.forEach(it => {
+    const priceForRow = (Number(it.price) || 0) * (Number(it.qty) || 0);
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${escapeHtml(it.name)}</td><td>${escapeHtml(String(it.qty))}</td><td>₹${priceForRow}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+/* total: prefer saved total key, otherwise compute from items */
+let total = localStorage.getItem(KEY_TOTAL);
+if (!total || Number(total) === 0) {
+  // compute
+  total = items.reduce((sum, it) => {
+    return sum + (Number(it.price) || 0) * (Number(it.qty) || 0);
+  }, 0);
+}
+document.getElementById("total").innerText = "Total: ₹" + total;
+
+/* small helper to avoid basic HTML injection from stored strings */
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+</script>
+</body>
+</html>

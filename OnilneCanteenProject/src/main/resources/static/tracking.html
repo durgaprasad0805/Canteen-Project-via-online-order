@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Tracking — KL Canteen</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #f4f6f9;
+}
+header {
+  background: #d32f2f;
+  color: #fff;
+  padding: 14px 20px;
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 600;
+}
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.10);
+  padding: 20px 22px 26px;
+}
+h2 {
+  margin-top: 0;
+  text-align: center;
+  color: #333;
+}
+label {
+  display: block;
+  margin-top: 12px;
+  font-size: 0.9rem;
+  color: #555;
+}
+input, textarea {
+  width: 100%;
+  padding: 10px 12px;
+  margin-top: 6px;
+  border-radius: 10px;
+  border: 1px solid #ddd;
+  font-family: inherit;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+textarea {
+  resize: vertical;
+  min-height: 70px;
+}
+button {
+  margin-top: 18px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 999px;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: linear-gradient(135deg, #ff7043, #d32f2f);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.20);
+}
+button:hover {
+  transform: translateY(-1px);
+}
+.status-card {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: #f9f9f9;
+  border: 1px dashed #ccc;
+  font-size: 0.9rem;
+}
+.badge {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  background: #ffe0b2;
+  color: #e65100;
+  margin-bottom: 6px;
+}
+small {
+  display: block;
+  margin-top: 4px;
+  color: #777;
+}
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 18px;
+  text-decoration: none;
+  font-size: 0.9rem;
+  color: #d32f2f;
+  font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<header>Customer & Delivery Tracking</header>
+
+<div class="container">
+  <h2>Track Your Order</h2>
+
+  <label for="custName">Customer Name</label>
+  <input type="text" id="custName" placeholder="Your name">
+
+  <label for="custRoll">Roll Number</label>
+  <input type="text" id="custRoll" placeholder="Roll number">
+
+  <label for="address">Delivery Address</label>
+  <textarea id="address" placeholder="Hostel / Block / Room No."></textarea>
+
+  <label for="orderCode">Order Code</label>
+  <input type="text" id="orderCode" placeholder="e.g. ORD-20250101094500-1234">
+
+  <button type="button" onclick="track()">Track Order</button>
+
+  <div id="statusCard" class="status-card" style="display:none;">
+    <div class="badge" id="statusBadge">Status</div>
+    <div><strong>Order:</strong> <span id="statusOrderCode"></span></div>
+    <div><strong>Amount:</strong> ₹<span id="statusAmount"></span></div>
+    <small id="statusTime"></small>
+  </div>
+
+  <a href="index.html" class="back-link">← Back to Home</a>
+</div>
+
+<script>
+// Prefill name & roll from login information
+(function preloadUser() {
+  try {
+    const user = JSON.parse(localStorage.getItem("kl_canteen_user_v1") || "{}");
+    if (user.name) document.getElementById("custName").value = user.name;
+    if (user.roll) document.getElementById("custRoll").value = user.roll;
+  } catch (e) {
+    console.warn("No user info found in localStorage");
+  }
+
+  const lastCode = localStorage.getItem("lastOrderCode");
+  if (lastCode) {
+    document.getElementById("orderCode").value = lastCode;
+  }
+})();
+
+async function track() {
+  const orderCode = document.getElementById("orderCode").value.trim();
+  if (!orderCode) {
+    alert("Please enter your Order Code");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/orders/" + encodeURIComponent(orderCode));
+    if (!res.ok) {
+      alert("Order not found. Please check your code.");
+      return;
+    }
+
+    const data = await res.json();
+    document.getElementById("statusCard").style.display = "block";
+    document.getElementById("statusOrderCode").innerText = data.orderCode;
+    document.getElementById("statusAmount").innerText = data.totalAmount || 0;
+    document.getElementById("statusTime").innerText = "Placed at: " + (data.createdAt || "");
+
+    document.getElementById("statusBadge").innerText = data.status || "Order placed";
+  } catch (e) {
+    console.error(e);
+    alert("Unable to track order right now. Please try again later.");
+  }
+}
+</script>
+
+</body>
+</html>

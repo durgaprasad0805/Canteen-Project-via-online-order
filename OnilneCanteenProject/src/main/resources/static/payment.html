@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment — KL Canteen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Poppins", sans-serif;
+  background: #f4f6f9;
+  text-align: center;
+  color: #222;
+}
+
+/* HEADER */
+header {
+  background: #ef233c;
+  padding: 14px;
+  color: white;
+  font-size: 22px;
+  font-weight: 700;
+  position: sticky;
+  top: 0;
+}
+
+/* CONTENT */
+.container {
+  max-width: 500px;
+  margin: 30px auto;
+  background: white;
+  padding: 25px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.amount-box {
+  font-size: 26px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: #2b2d42;
+}
+
+/* QR IMAGE */
+.qr-box img {
+  width: 240px;
+  height: 240px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+}
+
+/* BUTTON */
+.pay-btn {
+  background: #2ecc71;
+  padding: 14px;
+  border: none;
+  width: 100%;
+  color: white;
+  font-size: 18px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  margin-top: 25px;
+}
+
+.pay-btn:hover {
+  transform: translateY(-3px);
+}
+
+.back-btn {
+  margin-top: 20px;
+  display: inline-block;
+  color: #ef233c;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 17px;
+}
+
+/* SUCCESS POPUP */
+#successPopup {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 25px 35px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  text-align: center;
+  display: none;
+  z-index: 200;
+}
+
+#successPopup h2 {
+  color: #2ecc71;
+  margin-bottom: 10px;
+}
+
+.overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  z-index: 100;
+}
+
+</style>
+</head>
+<body>
+
+<header>Payment</header>
+
+<div class="container">
+  <div class="amount-box" id="amountBox">Amount: ₹0</div>
+
+  <div class="qr-box">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=KLUniversityCanteenPayment" alt="QR Code">
+  </div>
+
+  <button class="pay-btn" onclick="completePayment()">Payment Done</button>
+
+  <div class="back-btn" onclick="window.location.href='cart.html'">← Back to Cart</div>
+</div>
+
+<!-- POPUP -->
+<div class="overlay" id="overlay"></div>
+
+<div id="successPopup">
+  <h2>Payment Successful ✔</h2>
+  <p>Redirecting to receipt...</p>
+</div>
+
+<script>
+const STORAGE_KEY_TOTAL = "kl_canteen_total_v1";
+const STORAGE_KEY_QTY = "kl_canteen_quantities_v1";
+const STORAGE_KEY_ITEMS = "kl_canteen_items_v1";
+const STORAGE_KEY_USER = "kl_canteen_user_v1";
+
+// Show amount from cart/localStorage
+(function initAmount() {
+    let totalAmount = localStorage.getItem(STORAGE_KEY_TOTAL) || "0";
+    document.getElementById("amountBox").innerHTML = `Amount: ₹${totalAmount}`;
+})();
+
+function completePayment() {
+    // Show overlay + popup immediately
+    const overlay = document.getElementById("overlay");
+    const popup = document.getElementById("successPopup");
+    if (overlay) overlay.style.display = "block";
+    if (popup) popup.style.display = "block";
+
+    try {
+        const itemsJson = localStorage.getItem(STORAGE_KEY_ITEMS) || "[]";
+        let total = Number(localStorage.getItem(STORAGE_KEY_TOTAL) || 0);
+
+        if (!total || isNaN(total)) {
+            // Recalculate from items if needed
+            try {
+                const items = JSON.parse(itemsJson);
+                total = items.reduce((sum, it) => {
+                    return sum + (Number(it.price) || 0) * (Number(it.qty) || 0);
+                }, 0);
+            } catch (e) {
+                total = 0;
+            }
+        }
+
+        const formData = new URLSearchParams();
+        formData.append("totalAmount", String(total));
+        formData.append("itemsJson", itemsJson);
+
+        // Call Spring Boot backend (same relative path)
+        fetch("saveOrder", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded"
+            },
+            body: formData.toString()
+        })
+        .then(res => res.text())
+        .then(text => {
+            console.log("Server response:", text);
+            // Try to capture order code from server message
+            const match = text.match(/code:\s*(\S+)/i);
+            if (match && match[1]) {
+                localStorage.setItem("lastOrderCode", match[1]);
+            }
+        })
+        .catch(err => {
+            console.error("Error saving order:", err);
+        });
+    } catch (err) {
+        console.error("Unexpected error:", err);
+    }
+
+    // Go to receipt after short delay
+    setTimeout(() => {
+        window.location.href = "receipt.html";
+    }, 2000);
+}
+</script>
+
+</body>
+</html>
+

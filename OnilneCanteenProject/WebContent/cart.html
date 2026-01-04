@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Your Cart — KL University Canteen</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+  margin:0;
+  font-family:"Poppins",sans-serif;
+  background:#f4f6f9;
+  color:#222;
+}
+
+header{
+  background:#ef233c;
+  color:white;
+  padding:12px;
+  text-align:center;
+  font-size:20px;
+  font-weight:700;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+
+.cart-container{
+  max-width:850px;
+  margin:15px auto;
+  padding:10px;
+}
+
+.item-card{
+  display:flex;
+  align-items:center;
+  background:white;
+  border-radius:10px;
+  box-shadow:0 4px 12px rgba(0,0,0,0.05);
+  margin-bottom:10px;
+  padding:10px;
+}
+
+.item-card img{
+  width:70px;
+  height:70px;
+  object-fit:cover;
+  border-radius:8px;
+}
+
+.info{
+  flex:1;
+  margin-left:12px;
+}
+
+.title{
+  font-size:15px;
+  font-weight:700;
+  margin-bottom:4px;
+}
+
+.price{
+  font-size:14px;
+  font-weight:600;
+  color:#2b2d42;
+}
+
+.qty-controls{
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.inst-btn{
+  width:28px;
+  height:28px;
+  border-radius:50%;
+  background:white;
+  border:1px solid #ccc;
+  font-size:18px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.15s;
+}
+
+.inst-btn:hover{
+  transform:translateY(-2px);
+}
+
+.qty-display{
+  min-width:20px;
+  text-align:center;
+  font-weight:700;
+  font-size:14px;
+}
+
+.total-box{
+  text-align:right;
+  font-size:20px;
+  font-weight:700;
+  margin-top:15px;
+  color:#2b2d42;
+}
+
+.pay-btn{
+  width:100%;
+  background:#ef233c;
+  color:white;
+  border:none;
+  padding:12px;
+  border-radius:10px;
+  margin-top:15px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+
+.pay-btn:hover{
+  transform:translateY(-2px);
+}
+
+.empty{
+  text-align:center;
+  margin-top:50px;
+  font-size:20px;
+  color:#777;
+  font-weight:600;
+}
+</style>
+
+</head>
+<body>
+
+<header>Your Cart</header>
+
+<div class="cart-container" id="cartContainer"></div>
+
+<script>
+const STORAGE_KEY_Q = "kl_canteen_quantities_v1";
+const STORAGE_KEY_T = "kl_canteen_total_v1";
+
+const menuData = {
+  breakfast: [
+    { name:"Idly", price:40, img:"https://www.foodie-trail.com/wp-content/uploads/2020/06/251fdbc0-57f6-41c3-a976-5192391cf040.jpg" },
+    { name:"Dosa", price:30, img:"https://i.pinimg.com/originals/e8/dc/7f/e8dc7f0b59b8602ba30621dee3c6291c.jpg" },
+    { name:"Puri", price:35, img:"https://img.onmanorama.com/content/dam/mm/en/food/features/images/2022/3/13/poori.jpg" },
+    { name:"Vada", price:50, img:"https://i.pinimg.com/originals/77/e4/1a/77e41a3f015bc15fe3bc5da5b920aa17.jpg" },
+    { name:"Pongal", price:25, img:"https://tse3.mm.bing.net/th/id/OIP.SW8Molocq0lmqgz_4tsvTwHaEK?pid=Api&P=0&h=220" },
+    { name:"Chapati", price:45, img:"https://img.onmanorama.com/content/dam/mm/en/food/features/images/2024/4/30/chapati.jpg" },
+    { name:"Masala Dosa", price:50, img:"https://i.pinimg.com/736x/2a/c1/51/2ac15169850a766390adcba3a6d28eef.jpg" },
+    { name:"Upma", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.boBBw90ShLIHl5l9pQvbQgHaE7?pid=Api&P=0&h=220" },
+    { name:"Raagi Dosa", price:30, img:"https://img.freepik.com/premium-photo/ragi-dosa-healthy-south-indian-breakfast-item-arranged-round-wooden-base-lined-with-banana-leaf-coconut-chutney-placed-beside-it_527904-1536.jpg" },
+    { name:"Uggani", price:20, img:"https://i.ytimg.com/vi/_EPhnpuLEHI/hqdefault.jpg" },
+    { name:"Sambar Idly", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.FuE2-gjfS6o9HTXYh98fhAHaE8?pid=Api&P=0&h=220" }
+  ],
+
+  veg: [
+    { name:"Veg Meals", price:70, img:"https://tse3.mm.bing.net/th/id/OIP.jCnTA6SitnBnubN7OKiTDgHaHa?pid=Api&P=0&h=220" },
+    { name:"Curd Rice", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.cJzQ-h7MG0O2-osrDcUuLgHaEn?pid=Api&P=0&h=220" },
+    { name:"Jeera Rice", price:120, img:"https://www.indianhealthyrecipes.com/wp-content/uploads/2015/12/jeera-rice-recipe.jpg" },
+    { name:"Veg Fried Rice", price:100, img:"https://tse2.mm.bing.net/th/id/OIP.wJTgF8qg4XiMGGkG5CDRfwHaHa?pid=Api&P=0&h=220" },
+    { name:"Sambar Rice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.YZGH8CAvyJtUg6u6dhO84gHaHT?pid=Api&P=0&h=220" },
+    { name:"Paneer Rice", price:95, img:"https://homecookingshow.in/wp-content/uploads/2025/03/Paneer-Pulao-819x1024.webp" },
+    { name:"Tomato Rice", price:50, img:"https://homecookingshow.in/wp-content/uploads/2025/03/Paneer-Pulao-819x1024.webp" },
+    { name:"Aloo Paratha", price:45, img:"https://1.bp.blogspot.com/-y7eqFVueeuY/UERXjPPaLwI/AAAAAAAATvs/_4-fSks-FBo/s1600/pp+twelve.jpg" },
+    { name:"Paneer Butter Masala", price:120, img:"https://spicecravings.com/wp-content/uploads/2021/09/Paneer-Butter-Masala-Old-Featured.jpg" }
+  ],
+
+  nonveg: [
+    { name:"Biryani", price:80, img:"https://www.thespruceeats.com/thmb/SalyKjzBU-K1Bv-FTFWnbd6ckjY=/2121x1414/filters:fill(auto,1)/GettyImages-639704020-5c4a63ecc9e77c00017bfebf.jpg" },
+    { name:"Chicken Biryani", price:120, img:"https://tse4.mm.bing.net/th/id/OIP.r6T2zRnyrrP8LdtOEaGVowHaGl?pid=Api&P=0&h=220" },
+    { name:"Egg Biryani", price:90, img:"https://spicecravings.com/wp-content/uploads/2020/10/Egg-Biryani-Featured-1.jpg" },
+    { name:"NonVeg Meals", price:70, img:"https://tse1.mm.bing.net/th/id/OIP.kZMsRPanZxzEnkVLF8jVTQHaEK?pid=Api&P=0&h=220"},
+    { name:"Chicken Rice", price:90, img:"https://tse3.mm.bing.net/th/id/OIP.6wNMJIVTWqyvmBTXtZJ0JAHaJQ?pid=Api&P=0&h=220" },
+    { name:"Chicken 65", price:40, img:"https://tse1.mm.bing.net/th/id/OIP.IbkOrGWnnfnfVeswBWVBCgHaE5?pid=Api&P=0&h=220" },
+    { name:"Chicken Roll", price:95, img:"https://tse3.mm.bing.net/th/id/OIP.yDqW9-lugO2NnVzcbtbtrAHaE8?pid=Api&P=0&h=220" },
+    { name:"Egg Roll", price:50, img:"https://cdn3.tmbi.com/secure/RMS/attachments/37/1200x1200/exps32299_CW153679A08_18_4b-AP.jpg" },
+    { name:"Egg Rice", price:70, img:"https://i.ytimg.com/vi/iv1frVobFeQ/maxresdefault.jpg" },
+    { name:"Chicken Fried Rice", price:100, img:"https://www.thespruceeats.com/thmb/0hl8dMFFZDIZTPbQMFrsxlRpaE0=/2880x1920/filters:fill(auto,1)/easy-chicken-fried-rice-recipe-2098604-hero-01-4cc4085b544e45d4a293c4f05e0c985d.jpg" },
+    { name:"Tandoori Momos", price:40, img:"https://static.wixstatic.com/media/542bbb_495834b772074bbbb366610f789c1799~mv2.webp/v1/fill/w_1024,h_1024,al_c/542bbb_495834b772074bbbb366610f789c1799~mv2.webp" },
+    { name:"Chicken Pakodi", price:40, img:"https://yummyindiankitchen.com/wp-content/uploads/2021/04/chicken-pakora-720x960.jpg" },
+    { name:"Egg Puff", price:40, img:"http://spicyindiankitchen.com/wp-content/uploads/2019/03/egg_puffs_1.jpg" }
+  ],
+
+  snacks: [
+    { name:"Samosa", price:15, img:"https://tse3.mm.bing.net/th/id/OIP.Xp2RQVjyCr3kN1G8VhcK_wHaE_?pid=Api&P=0&h=220" },
+    { name:"Burger", price:70, img:"https://www.tasteofhome.com/wp-content/uploads/2020/03/Smash-Burgers_EXPS_TOHcom20_246232_B10_06_10b.jpg" },
+    { name:"French Fries", price:40, img:"https://tse2.mm.bing.net/th/id/OIP.f1R8kpo61Jk2qWFj3ruS3wHaEK?pid=Api&P=0&h=220" },
+    { name:"Apple Chips", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.PYURMf6R89uGbsk2qpr71QHaE8?pid=Api&P=0&h=220" },
+    { name:"Popcorn", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.h1tifceAwzQ__5lUbSUlfgHaEK?pid=Api&P=0&h=220" },
+    { name:"Pie", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.qNmF2LmUBc3U6JBODPsBPgHaFj?pid=Api&P=0&h=220" },
+    { name:"Waffle", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.uIjp1Cy9OvKf3qE0oBxflwHaHa?pid=Api&P=0&h=220" },
+    { name:"Pancakes", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.rhPtn7CWKyZ-H6dEG4c7bQHaLH?pid=Api&P=0&h=220" },
+    { name:"Donut", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.WU-2ga-oKTvNVSdaxYRAiwHaEK?pid=Api&P=0&h=220" },
+    { name:"Cupcakes", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.s-Yl5appwE1y1lj_AfwXCAHaHa?pid=Api&P=0&h=220" },
+    { name:"Cookies", price:50, img:"https://sallysbakingaddiction.com/wp-content/uploads/2017/05/soft-oatmeal-chocolate-chip-cookies-3.jpg" },
+    { name:"Pudding", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.5pqfoMQP-b2jJGgSTQ2H_AHaHa?pid=Api&P=0&h=220" },
+    { name:"Hot Dog", price:50, img:"https://tse3.mm.bing.net/th/id/OIP.HJW8lZYzmWbHeQhryR-pvAHaEK?pid=Api&P=0&h=220" },
+    { name:"Burrito", price:50, img:"https://c.ndtvimg.com/2023-07/j3l7ctlg_burrito_625x300_27_July_23.jpg" },
+    { name:"Tacos", price:50, img:"https://www.samtell.com/hs-fs/hubfs/Blogs/Four-Scrumptous-Tacos-Lined-up-with-ingredients-around-them-1.jpg?width=1800&name=Four-Scrumptous-Tacos-Lined-up-with-ingredients-around-them-1.jpg" },
+    { name:"Sandwich", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.y30GiRwfCGzCTIrhH1KVlgHaE6?pid=Api&P=0&h=220" },
+    { name:"Croissant", price:50, img:"https://www.tavolartegusto.it/wp/wp-content/uploads/2022/09/croissant-francesi.jpg" },
+    { name:"Corn Pizza", price:50, img:"https://i.ytimg.com/vi/gUlsgxzY9GU/maxresdefault.jpg" },
+    { name:"Chicken Pizza", price:50, img:"https://i.ytimg.com/vi/_bFuWNn8XWw/maxresdefault.jpg" },
+    { name:"Cheese Pizza", price:50, img:"https://houston.culturemap.com/media-library/drive-thru-gourmet-pizza-hut-double-cheesy-crust-pan-pizza.jpg?id=31525770&width=2000&height=1500&quality=85&coordinates=0%2C5%2C0%2C6" },
+    { name:"Chocolate Cake", price:50, img:"https://sugargeekshow.com/wp-content/uploads/2023/03/ganache_featured.jpg" },
+    { name:"Baguette", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.JcTfAHXbrWeMBgSOHuMRPAHaFC?pid=Api&P=0&h=220" },
+    { name:"Muffin", price:50, img:"https://thebusybaker.ca/wp-content/uploads/2019/12/pumpkin-chocolate-chip-muffins-fb-ig-2.jpg" },
+    { name:"Cheese Burger", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.giKEirPjdrP3UWY4-MfDVQHaE8?pid=Api&P=0&h=220" }
+  ],
+
+  drinks: [
+    { name:"Coca Cola", price:20, img:"https://www.thedailymeal.com/img/gallery/the-inspiration-behind-the-shape-of-coca-colas-iconic-original-bottle/intro-1672949640.jpg" },
+    { name:"Sprite", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.QjQkMKxtQ_DE2DN4GQjsGgHaLH?pid=Api&P=0&h=220" },
+    { name:"Water Bottle", price:10, img:"https://media.istockphoto.com/photos/group-of-plastic-drink-water-bottles-picture-id623194392?k=6&m=623194392&s=612x612&w=0&h=9uIdkREnslu1PCX09cQxz52a6HEQkmb_mMTs64xMC_E=" },
+    { name:"Apple Juice", price:50, img:"https://images.onlymyhealth.com/imported/images/2022/November/19_Nov_2022/main-applejuicebenefits.jpg" },
+    { name:"Lime Juice", price:50, img:"https://www.acouplecooks.com/wp-content/uploads/2020/08/Limeade-Recipe-007.jpg" },
+    { name:"Mango Juice", price:50, img:"https://tse1.mm.bing.net/th/id/OIP.gzKmW8CEkNjA7tS-6oHhJwHaGg?pid=Api&P=0&h=220" },
+    { name:"Pomegranate Juice", price:50, img:"https://tse2.mm.bing.net/th/id/OIP.DELWoy8qvzTojkAqFij-ewHaIB?pid=Api&P=0&h=220" },
+    { name:"Grape Juice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.aYmXHPNeAYPiiDNBryy8jAHaE8?pid=Api&P=0&h=220" },
+    { name:"Pineapple Juice", price:50, img:"https://www.catchyfinds.com/content/images/2023/01/V_Pineapple-Juice-16.jpg" },
+    { name:"Orange Juice", price:50, img:"https://tse4.mm.bing.net/th/id/OIP.5513JkBeYKpuy2WjNXsw9wHaHa?pid=Api&P=0&h=220" },
+    { name:"7 Up", price:35, img:"https://tse4.mm.bing.net/th/id/OIP.VSbVXxnCnCpyWfM6-rkisAHaHa?pid=Api&P=0&h=220" },
+    { name:"Mirinda", price:35, img:"https://c8.alamy.com/comp/2RDCGXH/cairo-egypt-july-11-2023-mirinda-a-brand-of-soft-drink-originally-created-in-spain-in-1959-and-distributed-globally-by-pepsico-since-1970-its-na-2RDCGXH.jpg" },
+    { name:"Fanta", price:35, img:"https://wongfood.vteximg.com.br/arquivos/ids/349478-1000-1000/Gaseosa-Fanta-Original-Lata-355-ml-1-120335414.jpg?v=637183476666870000" },
+    { name:"Pepsi", price:35, img:"https://tse4.mm.bing.net/th/id/OIP.iGY8OHfTU3HQO31AFGAptQHaLH?pid=Api&P=0&h=220" }
+  ],
+
+  coffeeTea: [
+    { name:"Tea", price:10, img:"https://tse3.mm.bing.net/th/id/OIP.LHguZotLpmbXmijITl31xwHaE8?pid=Api&P=0&h=220" },
+    { name:"Black Coffee", price:15, img:"https://tse3.mm.bing.net/th/id/OIP.VtBkYos_BrOFk4z5VjLPhgHaEK?pid=Api&P=0&h=220" },
+    { name:"Lemon Tea", price:15, img:"https://tse4.mm.bing.net/th/id/OIP.MUDMqe25q6QLA51XjKg3zQHaHa?pid=Api&P=0&h=220" },
+    { name:"Ginger Tea", price:15, img:"https://www.migrelief.com/wp-content/uploads/2013/08/Ginger-Tea-Recipes-scaled.jpeg" },
+    { name:"Badam Milk", price:25, img:"https://i.ytimg.com/vi/LrmNSksAYbE/maxresdefault.jpg" },
+    { name:"Filter Coffee", price:20, img:"https://tse4.mm.bing.net/th/id/OIP.Q_jgDPBgMNro4iFfne0JoQHaEK?pid=Api&P=0&h=220" },
+    { name:"Green Tea", price:30, img:"https://tse4.mm.bing.net/th/id/OIP.vmSdvtBt769nxL2uRzBGfAHaFa?pid=Api&P=0&h=220" }
+  ],
+
+  icecreams: [
+    { name:"Vanilla Cup", price:20, img:"https://tse4.mm.bing.net/th/id/OIP.Pju7nA0tKjloKtQzIbUyOAHaEK?pid=Api&P=0&h=220" },
+    { name:" hot Chocolate Cup", price:25, img:"https://tse4.mm.bing.net/th/id/OIP.qaKK6CGuQLoV0yDZ8rpLvwHaHa?pid=Api&P=0&h=220" },
+    { name:"Butterscotch Cone", price:25, img:"https://cpimg.tistatic.com/05822311/b/4/Butterscotch-Cone-Ice-Cream.jpg" },
+    { name:"Kulfi", price:25, img:"https://tse1.mm.bing.net/th/id/OIP.kozaWFYepjtHh9d8deIiGQHaHa?pid=Api&P=0&h=220" },
+    { name:"Strawberry Cone", price:25, img:"https://tse4.mm.bing.net/th/id/OIP.KoU3JXgOO_FInqtKUC8YTQHaHa?pid=Api&P=0&h=220" },
+    { name:"Choco Bar", price:25, img:"https://i.ytimg.com/vi/fP4y-Ri4A4k/maxresdefault.jpg" }
+  ],
+
+  chocolates: [
+    { name:"Dairy Milk", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.3ga6wd4XVu70uW8bBc7zzwHaFP?pid=Api&P=0&h=220" },
+    { name:"KitKat", price:10, img:"https://tse2.mm.bing.net/th/id/OIP.DkfnkQvzUJi_af2lvLqldQHaE8?pid=Api&P=0&h=220" },
+    { name:"Perk", price:20, img:"https://grocery.trishastore.com/products/1621870105.jpg" },
+    { name:"5 Star", price:20, img:"https://tse1.mm.bing.net/th/id/OIP.hvWbfiIGoWQYPeP4pQa8RwHaHa?pid=Api&P=0&h=220" },
+    { name:"Snickers", price:20, img:"https://tse3.mm.bing.net/th/id/OIP.r-90XzKVj5s8Cc9qPeIfHwHaE8?pid=Api&P=0&h=220" },
+    { name:"Bar One", price:20, img:"https://www.bigbasket.com/media/uploads/p/xxl/100011396_8-nestle-chocolate-bar-bar-one-nougat-caramel-filled.jpg" }
+  ]
+};
+
+let quantities = JSON.parse(localStorage.getItem(STORAGE_KEY_Q) || "{}");
+
+const cartContainer = document.getElementById("cartContainer");
+
+function renderCart(){
+  cartContainer.innerHTML = "";
+  let total = 0;
+  let itemsFound = false;
+
+  for(const cat in menuData){
+    for(const item of menuData[cat]){
+      const qty = quantities[item.name] || 0;
+      if(qty > 0){
+        itemsFound = true;
+        total += qty * item.price;
+
+        const card = document.createElement("div");
+        card.className = "item-card";
+
+        card.innerHTML = `
+          <img src="${item.img}">
+          <div class="info">
+            <div class="title">${item.name}</div>
+            <div class="price">₹${item.price}</div>
+          </div>
+
+          <div class="qty-controls">
+            <button class="inst-btn" onclick="decreaseQty('${item.name}')">−</button>
+            <div class="qty-display" id="${item.name.replace(/[^a-z0-9]/gi,'_')}_qty">${qty}</div>
+            <button class="inst-btn" onclick="increaseQty('${item.name}')">+</button>
+          </div>
+        `;
+
+        cartContainer.appendChild(card);
+      }
+    }
+  }
+
+  if(!itemsFound){
+    cartContainer.innerHTML = `<div class="empty">Your cart is empty</div>`;
+    return;
+  }
+
+  const totalBox = document.createElement("div");
+  totalBox.className = "total-box";
+  totalBox.innerHTML = `Total Amount: ₹${total}`;
+
+  const payBtn = document.createElement("button");
+  payBtn.className = "pay-btn";
+  payBtn.innerText = "Proceed to Payment";
+  payBtn.onclick = ()=> {
+    localStorage.setItem(STORAGE_KEY_T, String(total));
+    window.location.href = "payment.html";
+  };
+
+  cartContainer.appendChild(totalBox);
+  cartContainer.appendChild(payBtn);
+}
+
+function increaseQty(name){
+  quantities[name] = (quantities[name] || 0) + 1;
+  persist();
+  renderCart();
+}
+
+function decreaseQty(name){
+  if(quantities[name] > 0){
+    quantities[name]--;
+  }
+  persist();
+  renderCart();
+}
+
+function persist(){
+  localStorage.setItem(STORAGE_KEY_Q, JSON.stringify(quantities));
+}
+
+renderCart();
+</script>
+
+<!-- ⭐ ADDED CODE FOR RECEIPT PAGE SAVING ⭐ -->
+<script>
+document.addEventListener("click", function(e){
+  if(e.target.classList.contains("pay-btn")){
+      
+      const items = [];
+      for(const cat in menuData){
+        for(const item of menuData[cat]){
+          const qty = quantities[item.name] || 0;
+          if(qty > 0){
+            items.push({
+              name: item.name,
+              qty: qty,
+              price: item.price
+            });
+          }
+        }
+      }
+
+      localStorage.setItem("kl_canteen_items_v1", JSON.stringify(items));
+  }
+});
+</script>
+<!-- ⭐ END OF ADDED CODE ⭐ -->
+
+</body>
+</html>
